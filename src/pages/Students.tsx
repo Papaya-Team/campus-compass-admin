@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -29,34 +28,40 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Student } from "@/types";
-import { useStudents, campuses, grades, languages } from "@/services/mockStudentService";
+import { Student, Campus, Grade, Language } from "@/types";
 import { Edit, Trash2, UserPlus, Search, Upload } from "lucide-react";
 import { parseCSV, validateStudentData } from "@/lib/csv-utils";
 import StudentCSVUpload from "@/components/students/StudentCSVUpload";
+import { useSupabaseStudents, getCampuses, getGrades, getLanguages } from "@/services/supabaseStudentService";
 
 const Students = () => {
   const { 
-    students, 
+    isLoading: studentsLoading, 
+    error: studentsError,
     getStudents, 
     addStudent, 
     updateStudent, 
     deleteStudent,
     addMultipleStudents
-  } = useStudents();
+  } = useSupabaseStudents();
   
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCSVDialog, setShowCSVDialog] = useState(false);
+
+  // Reference data
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [languages, setLanguages] = useState<Language[]>([]);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Student>>({
@@ -71,14 +76,63 @@ const Students = () => {
     student_code: "",
   });
 
+  // Load reference data
+  useEffect(() => {
+    const loadReferenceData = async () => {
+      try {
+        const [campusesData, gradesData, languagesData] = await Promise.all([
+          getCampuses(),
+          getGrades(),
+          getLanguages()
+        ]);
+        
+        setCampuses(campusesData);
+        setGrades(gradesData);
+        setLanguages(languagesData);
+      } catch (error) {
+        console.error("Error loading reference data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load reference data. Please refresh the page.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    loadReferenceData();
+  }, [toast]);
+
+  // Load students
   useEffect(() => {
     const loadStudents = async () => {
-      await getStudents();
-      setIsLoading(false);
+      setIsLoading(true);
+      try {
+        const data = await getStudents();
+        setStudents(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load students. Please refresh the page.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadStudents();
-  }, [getStudents]);
+  }, [getStudents, toast]);
+
+  // Error handling for student service errors
+  useEffect(() => {
+    if (studentsError) {
+      toast({
+        title: "Error",
+        description: studentsError,
+        variant: "destructive",
+      });
+    }
+  }, [studentsError, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -105,7 +159,7 @@ const Students = () => {
 
   const handleAddStudent = async () => {
     try {
-      if (!formData.name || !formData.email || !formData.campus_id || !formData.grade_id) {
+      if (!formData.name || !formData.campus_id || !formData.grade_id) {
         toast({
           title: "Missing required fields",
           description: "Please fill in all required fields.",
@@ -114,7 +168,9 @@ const Students = () => {
         return;
       }
 
-      await addStudent(formData as Omit<Student, "student_id">);
+      const newStudent = await addStudent(formData as Omit<Student, "student_id">);
+      setStudents(prev => [...prev, newStudent]);
+      
       toast({
         title: "Success",
         description: "Student added successfully.",
@@ -141,7 +197,7 @@ const Students = () => {
     if (!selectedStudent) return;
     
     try {
-      if (!formData.name || !formData.email || !formData.campus_id || !formData.grade_id) {
+      if (!formData.name || !formData.campus_id || !formData.grade_id) {
         toast({
           title: "Missing required fields",
           description: "Please fill in all required fields.",
@@ -150,10 +206,16 @@ const Students = () => {
         return;
       }
 
-      await updateStudent({
+      const updatedStudent = await updateStudent({
         ...formData,
         student_id: selectedStudent.student_id,
       } as Student);
+      
+      setStudents(prev => 
+        prev.map(student => 
+          student.student_id === updatedStudent.student_id ? updatedStudent : student
+        )
+      );
       
       toast({
         title: "Success",
@@ -180,10 +242,14 @@ const Students = () => {
     
     try {
       await deleteStudent(selectedStudent.student_id);
+      
+      setStudents(prev => prev.filter(student => student.student_id !== selectedStudent.student_id));
+      
       toast({
         title: "Success",
         description: "Student deleted successfully.",
       });
+      
       setShowDeleteDialog(false);
     } catch (error) {
       toast({
@@ -196,11 +262,15 @@ const Students = () => {
 
   const handleCSVUpload = async (csvData: Student[]) => {
     try {
-      await addMultipleStudents(csvData);
+      const newStudents = await addMultipleStudents(csvData);
+      
+      setStudents(prev => [...prev, ...newStudents]);
+      
       toast({
         title: "Success",
-        description: `${csvData.length} students imported successfully.`,
+        description: `${newStudents.length} students imported successfully.`,
       });
+      
       setShowCSVDialog(false);
     } catch (error) {
       toast({
@@ -213,7 +283,7 @@ const Students = () => {
 
   const filteredStudents = students.filter((student) => 
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (student.campus && student.campus.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -244,6 +314,12 @@ const Students = () => {
           />
         </div>
       </div>
+
+      {studentsError && (
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md">
+          Error loading students: {studentsError}
+        </div>
+      )}
 
       <div className="rounded-md border">
         <Table>
@@ -325,7 +401,7 @@ const Students = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   name="email"
@@ -463,7 +539,7 @@ const Students = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   name="email"
@@ -616,3 +692,4 @@ const Students = () => {
 };
 
 export default Students;
+
