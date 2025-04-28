@@ -17,8 +17,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar open={sidebarOpen} />
         
-        <main className="main-content overflow-y-auto p-3 md:p-4 lg:p-5">
-          <div className="container mx-auto px-0 md:px-2">
+        <main className="main-content overflow-y-auto p-4 md:p-6">
+          <div className="container mx-auto">
             {children}
           </div>
         </main>
