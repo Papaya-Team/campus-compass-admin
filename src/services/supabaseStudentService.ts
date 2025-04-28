@@ -3,6 +3,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { Student, Campus, Grade, Language } from "@/types";
 import { useState } from "react";
 
+// Utility function for retrying failed requests
+async function retryOperation(operation, maxRetries = 3, delay = 1000) {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt + 1}/${maxRetries} for database operation`);
+      return await operation();
+    } catch (err) {
+      console.error(`Attempt ${attempt + 1} failed:`, err);
+      lastError = err;
+      
+      if (attempt < maxRetries - 1) {
+        // Wait before next retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt)));
+      }
+    }
+  }
+
+  throw lastError; // If all retries fail
+}
+
 // Service hooks for student data using Supabase
 export function useSupabaseStudents() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,40 +35,47 @@ export function useSupabaseStudents() {
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('student')
-        .select(`
-          id,
-          name,
-          campus_id,
-          grade_id,
-          language_id,
-          campus:campus_id (name),
-          grade:grade_id (name),
-          language:language_id (name)
-        `);
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Map the Supabase response to our Student type
-      return data.map((item: any) => ({
-        student_id: item.id.toString(),
-        name: item.name,
-        campus_id: item.campus_id,
-        grade_id: item.grade_id,
-        language_id: item.language_id,
-        campus: item.campus?.name,
-        gender: "", // Supabase schema doesn't have this field yet
-        email: "", // Supabase schema doesn't have this field yet
-        meet_link: "", // Supabase schema doesn't have this field yet
-        local_id: "", // Supabase schema doesn't have this field yet
-        student_code: "" // Supabase schema doesn't have this field yet
-      }));
+      return await retryOperation(async () => {
+        console.log("Fetching students from Supabase...");
+        const { data, error } = await supabase
+          .from('student')
+          .select(`
+            id,
+            name,
+            campus_id,
+            grade_id,
+            language_id,
+            campus:campus_id (name),
+            grade:grade_id (name),
+            language:language_id (name)
+          `);
+        
+        if (error) {
+          console.error("Supabase error:", error);
+          throw new Error(error.message);
+        }
+        
+        console.log("Successfully fetched students:", data);
+        
+        // Map the Supabase response to our Student type
+        return data.map((item: any) => ({
+          student_id: item.id.toString(),
+          name: item.name,
+          campus_id: item.campus_id,
+          grade_id: item.grade_id,
+          language_id: item.language_id,
+          campus: item.campus?.name,
+          gender: "", // Supabase schema doesn't have this field yet
+          email: "", // Supabase schema doesn't have this field yet
+          meet_link: "", // Supabase schema doesn't have this field yet
+          local_id: "", // Supabase schema doesn't have this field yet
+          student_code: "" // Supabase schema doesn't have this field yet
+        }));
+      });
     } catch (err: any) {
-      setError(err.message);
-      console.error("Error fetching students:", err);
+      const errorMessage = err.message || "Failed to fetch students";
+      setError(errorMessage);
+      console.error("Final error fetching students:", err);
       return [];
     } finally {
       setIsLoading(false);
@@ -264,16 +293,18 @@ export function useSupabaseStudents() {
   };
 }
 
-// Get reference data from Supabase
+// Get reference data from Supabase with retry logic
 export async function getCampuses(): Promise<Campus[]> {
   try {
-    const { data, error } = await supabase
-      .from('campus')
-      .select('campus_id, name');
-    
-    if (error) throw error;
-    
-    return data;
+    return await retryOperation(async () => {
+      const { data, error } = await supabase
+        .from('campus')
+        .select('campus_id, name');
+      
+      if (error) throw error;
+      
+      return data;
+    });
   } catch (error) {
     console.error("Error fetching campuses:", error);
     return [];
@@ -282,13 +313,15 @@ export async function getCampuses(): Promise<Campus[]> {
 
 export async function getGrades(): Promise<Grade[]> {
   try {
-    const { data, error } = await supabase
-      .from('grade')
-      .select('grade_id, name');
-    
-    if (error) throw error;
-    
-    return data;
+    return await retryOperation(async () => {
+      const { data, error } = await supabase
+        .from('grade')
+        .select('grade_id, name');
+      
+      if (error) throw error;
+      
+      return data;
+    });
   } catch (error) {
     console.error("Error fetching grades:", error);
     return [];
@@ -297,13 +330,15 @@ export async function getGrades(): Promise<Grade[]> {
 
 export async function getLanguages(): Promise<Language[]> {
   try {
-    const { data, error } = await supabase
-      .from('language')
-      .select('language_id, name');
-    
-    if (error) throw error;
-    
-    return data;
+    return await retryOperation(async () => {
+      const { data, error } = await supabase
+        .from('language')
+        .select('language_id, name');
+      
+      if (error) throw error;
+      
+      return data;
+    });
   } catch (error) {
     console.error("Error fetching languages:", error);
     return [];

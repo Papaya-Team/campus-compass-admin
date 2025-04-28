@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { NavBar } from './NavBar';
+import { Toaster } from "@/components/ui/toaster";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,12 +18,15 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar open={sidebarOpen} />
         
-        <main className="main-content flex-1 overflow-y-auto p-3 sm:p-4 md:p-5">
+        <main className="main-content flex-1 overflow-y-auto p-2 sm:p-3 md:p-4">
           <div className="container mx-auto max-w-full">
             {children}
           </div>
         </main>
       </div>
+      
+      {/* Add Toaster component for better error visibility */}
+      <Toaster />
     </div>
   );
 };
