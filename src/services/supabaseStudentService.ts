@@ -65,11 +65,6 @@ export function useSupabaseStudents() {
           grade_id: item.grade_id,
           language_id: item.language_id,
           campus: item.campus?.name,
-          gender: "", // Supabase schema doesn't have this field yet
-          email: "", // Supabase schema doesn't have this field yet
-          meet_link: "", // Supabase schema doesn't have this field yet
-          local_id: "", // Supabase schema doesn't have this field yet
-          student_code: "" // Supabase schema doesn't have this field yet
         }));
       });
     } catch (err: any) {
@@ -113,11 +108,6 @@ export function useSupabaseStudents() {
         grade_id: data.grade_id,
         language_id: data.language_id,
         campus: data.campus?.name,
-        gender: "", // Not in current schema
-        email: "", // Not in current schema
-        meet_link: "", // Not in current schema
-        local_id: "", // Not in current schema
-        student_code: "" // Not in current schema
       };
     } catch (err: any) {
       setError(err.message);
@@ -155,11 +145,6 @@ export function useSupabaseStudents() {
         grade_id: data.grade_id,
         language_id: data.language_id,
         campus: student.campus,
-        gender: student.gender || "",
-        email: student.email || "",
-        meet_link: student.meet_link || "",
-        local_id: student.local_id || "",
-        student_code: student.student_code || ""
       };
     } catch (err: any) {
       setError(err.message);
@@ -198,11 +183,6 @@ export function useSupabaseStudents() {
         grade_id: data.grade_id,
         language_id: data.language_id,
         campus: updatedStudent.campus,
-        gender: updatedStudent.gender || "",
-        email: updatedStudent.email || "",
-        meet_link: updatedStudent.meet_link || "",
-        local_id: updatedStudent.local_id || "",
-        student_code: updatedStudent.student_code || ""
       };
     } catch (err: any) {
       setError(err.message);
@@ -266,11 +246,6 @@ export function useSupabaseStudents() {
         grade_id: item.grade_id,
         language_id: item.language_id,
         campus: newStudents[index].campus,
-        gender: newStudents[index].gender || "",
-        email: newStudents[index].email || "",
-        meet_link: newStudents[index].meet_link || "",
-        local_id: newStudents[index].local_id || "",
-        student_code: newStudents[index].student_code || ""
       }));
     } catch (err: any) {
       setError(err.message);
