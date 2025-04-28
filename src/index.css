@@ -102,18 +102,18 @@
 }
 
 .sidebar-active .main-content {
-  margin-left: 250px;
-  width: calc(100% - 250px);
+  margin-left: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .sidebar-active .main-content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+  }
 }
 
 .sidebar-collapsed .main-content {
   margin-left: 0;
   width: 100%;
-}
-
-@media (max-width: 767px) {
-  .sidebar-active .main-content {
-    margin-left: 0;
-    width: 100%;
-  }
 }
