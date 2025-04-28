@@ -71,9 +71,6 @@ const Students = () => {
     campus_id: "",
     grade_id: "",
     language_id: "",
-    meet_link: "",
-    local_id: "",
-    student_code: "",
   });
 
   // Load reference data
@@ -151,9 +148,6 @@ const Students = () => {
       campus_id: "",
       grade_id: "",
       language_id: "",
-      meet_link: "",
-      local_id: "",
-      student_code: "",
     });
   };
 
