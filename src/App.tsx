@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 // Pages
 import Login from "./pages/Login";
 import Students from "./pages/Students";
+import Schools from "./pages/Schools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Navigate to="/students" replace />} />
             <Route path="/students" element={<Students />} />
+            <Route path="/schools" element={<Schools />} />
             {/* Other protected routes will be added here */}
           </Route>
           

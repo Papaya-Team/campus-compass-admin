@@ -1,4 +1,3 @@
-
 export interface Student {
   student_id: string;
   campus_id: string;
@@ -26,4 +25,17 @@ export interface Grade {
 export interface Language {
   language_id: string;
   name: string;
+}
+
+export interface School {
+  school_id: string;
+  name: string;
+  district_id?: string;
+  district?: string;
+}
+
+export interface District {
+  district_id: string;
+  name: string;
+  region_id?: string;
 }
