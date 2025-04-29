@@ -120,9 +120,13 @@ export function useSupabaseSchools() {
     
     try {
       return await retryOperation(async () => {
+        // Generate a UUID for the school_id
+        const school_id = crypto.randomUUID();
+        
         const { data, error } = await supabase
           .from('school')
           .insert({
+            school_id: school_id,  // Include the generated UUID
             name: school.name,
             district_id: school.district_id
           })
