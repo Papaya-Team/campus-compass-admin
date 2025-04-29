@@ -1,68 +1,60 @@
 
 import { Student } from "@/types";
 
-export function parseCSV(csvText: string): Student[] {
-  const lines = csvText.trim().split("\n");
-  const headers = lines[0].split(",").map(header => header.trim());
+export const parseCSV = (csvContent: string): Student[] => {
+  const lines = csvContent.trim().split('\n');
+  const headers = lines[0].split(',').map(header => header.trim());
   
-  // Map CSV headers to our Student interface properties
-  const headerMap: Record<string, keyof Student> = {
-    "student_id": "student_id",
-    "campus_id": "campus_id",
-    "grade_id": "grade_id",
-    "language_id": "language_id",
-    "Name": "name",
-    "gender": "gender",
-    "email": "email",
-    "meet link": "meet_link",
-    "local id": "local_id",
-    "Student": "name", // Assuming this is a duplicate of Name
-    "Student Code": "student_code",
-    "Campus": "campus"
-  };
-
-  return lines.slice(1).map(line => {
-    const values = line.split(",").map(value => value.trim());
-    const student: Partial<Student> = {};
+  const students: Student[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(value => value.trim());
+    
+    if (values.length !== headers.length) continue;
+    
+    const student: any = {
+      student_id: '',  // This will be assigned by the database
+    };
     
     headers.forEach((header, index) => {
-      const propertyName = headerMap[header];
-      if (propertyName && values[index]) {
-        student[propertyName] = values[index];
-      }
+      const value = values[index];
+      if (header.toLowerCase() === 'name') student.name = value;
+      else if (header.toLowerCase() === 'email') student.email = value;
+      else if (header.toLowerCase() === 'gender') student.gender = value;
+      else if (header.toLowerCase() === 'campus_id') student.campus_id = value;
+      else if (header.toLowerCase() === 'grade_id') student.grade_id = value;
+      else if (header.toLowerCase() === 'language_id') student.language_id = value;
+      else if (header.toLowerCase() === 'campus') student.campus = value;
+      else if (header.toLowerCase() === 'meet_link') student.meet_link = value;
+      else if (header.toLowerCase() === 'local_id') student.local_id = value;
+      else if (header.toLowerCase() === 'student_code') student.student_code = value;
     });
+    
+    students.push(student as Student);
+  }
+  
+  return students;
+};
 
-    return student as Student;
-  });
-}
-
-export function validateStudentData(students: Student[]): { valid: boolean; errors: string[] } {
+export const validateStudentData = (students: Student[]): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
   
   students.forEach((student, index) => {
     if (!student.name) {
-      errors.push(`Row ${index + 1}: Missing student name`);
+      errors.push(`Row ${index + 1}: Name is required`);
     }
-    if (!student.email) {
-      errors.push(`Row ${index + 1}: Missing email`);
-    } else if (!isValidEmail(student.email)) {
-      errors.push(`Row ${index + 1}: Invalid email format - ${student.email}`);
-    }
+    
     if (!student.campus_id) {
-      errors.push(`Row ${index + 1}: Missing campus ID`);
+      errors.push(`Row ${index + 1}: Campus ID is required`);
     }
+    
     if (!student.grade_id) {
-      errors.push(`Row ${index + 1}: Missing grade ID`);
+      errors.push(`Row ${index + 1}: Grade ID is required`);
     }
   });
-
+  
   return {
     valid: errors.length === 0,
     errors
   };
-}
-
-function isValidEmail(email: string): boolean {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-}
+};

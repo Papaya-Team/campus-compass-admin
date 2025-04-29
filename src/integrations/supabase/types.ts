@@ -509,6 +509,65 @@ export type Database = {
           },
         ]
       }
+      schedule: {
+        Row: {
+          "end hour": string | null
+          FRI: boolean | null
+          group_id: string | null
+          MON: boolean | null
+          name: string | null
+          SAT: boolean | null
+          schedule_id: string
+          "start date": string | null
+          "start hour": string | null
+          SUN: boolean | null
+          THU: boolean | null
+          Timeframe: string | null
+          TUE: boolean | null
+          WED: boolean | null
+        }
+        Insert: {
+          "end hour"?: string | null
+          FRI?: boolean | null
+          group_id?: string | null
+          MON?: boolean | null
+          name?: string | null
+          SAT?: boolean | null
+          schedule_id: string
+          "start date"?: string | null
+          "start hour"?: string | null
+          SUN?: boolean | null
+          THU?: boolean | null
+          Timeframe?: string | null
+          TUE?: boolean | null
+          WED?: boolean | null
+        }
+        Update: {
+          "end hour"?: string | null
+          FRI?: boolean | null
+          group_id?: string | null
+          MON?: boolean | null
+          name?: string | null
+          SAT?: boolean | null
+          schedule_id?: string
+          "start date"?: string | null
+          "start hour"?: string | null
+          SUN?: boolean | null
+          THU?: boolean | null
+          Timeframe?: string | null
+          TUE?: boolean | null
+          WED?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group"
+            referencedColumns: ["group_id"]
+          },
+        ]
+      }
       school: {
         Row: {
           district_id: string | null
